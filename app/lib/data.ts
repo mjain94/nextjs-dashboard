@@ -108,54 +108,67 @@ export async function fetchCardData(
 
 const ITEMS_PER_PAGE = 6;
 export async function fetchFilteredInvoices(
+  supabase: SupabaseClient<Database>,
   query: string,
   currentPage: number
 ) {
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
-  try {
-    const invoices = await sql<InvoicesTable>`
-      SELECT
-        invoices.id,
-        invoices.amount,
-        invoices.date,
-        invoices.status,
-        customers.name,
-        customers.email,
-        customers.image_url
-      FROM invoices
-      JOIN customers ON invoices.customer_id = customers.id
-      WHERE
-        customers.name ILIKE ${`%${query}%`} OR
-        customers.email ILIKE ${`%${query}%`} OR
-        invoices.amount::text ILIKE ${`%${query}%`} OR
-        invoices.date::text ILIKE ${`%${query}%`} OR
-        invoices.status ILIKE ${`%${query}%`}
-      ORDER BY invoices.date DESC
-      LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
-    `;
+  // const invoices = await sql<InvoicesTable>`
+  //   SELECT
+  //     invoices.id,
+  //     invoices.amount,
+  //     invoices.date,
+  //     invoices.status,
+  //     customers.name,
+  //     customers.email,
+  //     customers.image_url
+  //   FROM invoices
+  //   JOIN customers ON invoices.customer_id = customers.id
+  //   WHERE
+  //     customers.name ILIKE ${`%${query}%`} OR
+  //     customers.email ILIKE ${`%${query}%`} OR
+  //     invoices.amount::text ILIKE ${`%${query}%`} OR
+  //     invoices.date::text ILIKE ${`%${query}%`} OR
+  //     invoices.status ILIKE ${`%${query}%`}
+  //   ORDER BY invoices.date DESC
+  //   LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+  // `;
 
-    return invoices.rows;
-  } catch (error) {
+  const { data: invoices, error } = await supabase.rpc("fetch_invoices", {
+    query,
+    items_per_page: ITEMS_PER_PAGE,
+    page_offset: offset,
+  });
+  if (error) {
     console.error("Database Error:", error);
-    throw new Error("Failed to fetch invoices.");
+    throw error;
   }
+
+  return invoices;
 }
 
-export async function fetchInvoicesPages(query: string) {
+export async function fetchInvoicesPages(
+  query: string,
+  supabase: SupabaseClient<Database>
+) {
   try {
-    const count = await sql`SELECT COUNT(*)
-    FROM invoices
-    JOIN customers ON invoices.customer_id = customers.id
-    WHERE
-      customers.name ILIKE ${`%${query}%`} OR
-      customers.email ILIKE ${`%${query}%`} OR
-      invoices.amount::text ILIKE ${`%${query}%`} OR
-      invoices.date::text ILIKE ${`%${query}%`} OR
-      invoices.status ILIKE ${`%${query}%`}
-  `;
+    //   const count = await sql`SELECT COUNT(*)
+    //   FROM invoices
+    //   JOIN customers ON invoices.customer_id = customers.id
+    //   WHERE
+    //     customers.name ILIKE ${`%${query}%`} OR
+    //     customers.email ILIKE ${`%${query}%`} OR
+    //     invoices.amount::text ILIKE ${`%${query}%`} OR
+    //     invoices.date::text ILIKE ${`%${query}%`} OR
+    //     invoices.status ILIKE ${`%${query}%`}
+    // `;
 
-    const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
+    const count = await supabase.rpc("count_invoices", {
+      query,
+    });
+
+    const totalPages = Math.ceil(Number(count.data) / ITEMS_PER_PAGE);
     return totalPages;
   } catch (error) {
     console.error("Database Error:", error);
@@ -163,47 +176,40 @@ export async function fetchInvoicesPages(query: string) {
   }
 }
 
-export async function fetchInvoiceById(id: string) {
+export async function fetchInvoiceById(
+  id: string,
+  supabase: SupabaseClient<Database>
+) {
   try {
-    const data = await sql<InvoiceForm>`
-      SELECT
-        invoices.id,
-        invoices.customer_id,
-        invoices.amount,
-        invoices.status
-      FROM invoices
-      WHERE invoices.id = ${id};
-    `;
+    const { data, error } = await supabase
+      .from("invoices")
+      .select("id, customer_id, amount, status")
+      .eq("id", id);
 
-    const invoice = data.rows.map((invoice) => ({
+    const invoice = data?.map((invoice) => ({
       ...invoice,
       // Convert amount from cents to dollars
       amount: invoice.amount / 100,
     }));
 
-    return invoice[0];
+    return invoice?.[0];
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch invoice.");
   }
 }
 
-export async function fetchCustomers() {
-  try {
-    const data = await sql<CustomerField>`
-      SELECT
-        id,
-        name
-      FROM customers
-      ORDER BY name ASC
-    `;
-
-    const customers = data.rows;
-    return customers;
-  } catch (err) {
-    console.error("Database Error:", err);
-    throw new Error("Failed to fetch all customers.");
+export async function fetchCustomers(supabase: SupabaseClient<Database>) {
+  const { data, error } = await supabase
+    .from("customers")
+    .select("id, name")
+    .order("name", { ascending: true });
+  if (error) {
+    console.error("Database Error:", error);
+    throw error;
   }
+
+  return data;
 }
 
 export async function fetchFilteredCustomers(query: string) {

@@ -128,6 +128,28 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      count_invoices: {
+        Args: {
+          query: string;
+        };
+        Returns: number;
+      };
+      fetch_invoices: {
+        Args: {
+          query: string;
+          items_per_page: number;
+          page_offset: number;
+        };
+        Returns: {
+          id: string;
+          amount: number;
+          date: string;
+          status: string;
+          customer_name: string;
+          customer_email: string;
+          customer_image_url: string;
+        }[];
+      };
       invoice_status: {
         Args: Record<PropertyKey, never>;
         Returns: {
