@@ -1,16 +1,12 @@
 import { sql } from "@vercel/postgres";
 import {
-  CustomerField,
-  CustomersTableType,
-  InvoiceForm,
-  InvoicesTable,
-  LatestInvoice,
-  Revenue,
+CustomersTableType,
+LatestInvoice,
+Revenue,
 } from "./definitions";
 import { formatCurrency } from "./utils";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/app/lib/database.types";
-import { count } from "console";
 
 export async function fetchRevenue(
   supabase: SupabaseClient<Database>

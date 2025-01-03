@@ -2,6 +2,7 @@ import Form from "@/app/ui/invoices/edit-form";
 import Breadcrumbs from "@/app/ui/invoices/breadcrumbs";
 import { createClient } from "@/app/utils/supabase/server";
 import { fetchInvoiceById, fetchCustomers } from "@/app/lib/data";
+import { notFound } from "next/navigation";
 
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const supabase = await createClient();
@@ -11,6 +12,11 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     fetchInvoiceById(id, supabase),
     fetchCustomers(supabase),
   ]);
+
+  if (!invoice) {
+    notFound();
+  }
+
   return (
     <main>
       <Breadcrumbs

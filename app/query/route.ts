@@ -2,8 +2,6 @@ import { db } from "@vercel/postgres";
 import { createClient } from "@/app/utils/supabase/server";
 import { Revenue } from "@/app/lib/definitions";
 
-const client = await db.connect();
-
 async function listInvoices() {
   // const data = await db.sql`
   //   SELECT invoices.amount, customers.name

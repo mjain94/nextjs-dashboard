@@ -1,7 +1,6 @@
 import { generateYAxis } from "@/app/lib/utils";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { lusitana } from "@/app/ui/fonts";
-import { Revenue } from "@/app/lib/definitions";
 import { Database } from "@/app/lib/database.types";
 
 // This component is representational only.
