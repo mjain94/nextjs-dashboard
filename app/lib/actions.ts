@@ -1,5 +1,7 @@
 "use server";
 
+import { signIn } from "@/auth";
+import { AuthError } from "next-auth";
 import { z } from "zod";
 import { createClient } from "@/app/utils/supabase/server";
 import { revalidatePath } from "next/cache";
@@ -85,4 +87,23 @@ export async function deleteInvoice(id: string) {
   const supabase = await createClient();
   await supabase.from("invoices").delete().eq("id", id);
   revalidatePath("/dashboard/invoices");
+}
+
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData
+) {
+  try {
+    await signIn("credentials", formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case "CredentialsSignin":
+          return "Invalid credentials.";
+        default:
+          return "Something went wrong.";
+      }
+    }
+    throw error;
+  }
 }
