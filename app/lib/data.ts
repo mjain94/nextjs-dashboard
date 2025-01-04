@@ -1,9 +1,5 @@
 import { sql } from "@vercel/postgres";
-import {
-CustomersTableType,
-LatestInvoice,
-Revenue,
-} from "./definitions";
+import { CustomersTableType, LatestInvoice, Revenue } from "./definitions";
 import { formatCurrency } from "./utils";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database } from "@/app/lib/database.types";
@@ -186,6 +182,8 @@ export async function fetchInvoiceById(
       ...invoice,
       // Convert amount from cents to dollars
       amount: invoice.amount / 100,
+      // Ensure status is correctly typed
+      status: invoice.status as "pending" | "paid",
     }));
 
     return invoice?.[0];
